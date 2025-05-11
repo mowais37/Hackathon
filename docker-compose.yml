@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongo:
+    image: mongo:6.0
+    container_name: agentdock-mongo
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME:-admin}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD:-password}
+    networks:
+      - agentdock-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  # Backend API
+  backend:
+    build:
+      context: ./agentdock-backend
+      dockerfile: Dockerfile
+    container_name: agentdock-backend
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - PORT=3001
+      - MONGODB_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME:-admin}:${MONGO_INITDB_ROOT_PASSWORD:-password}@mongo:27017/agentdock?authSource=admin
+      - JWT_SECRET=${JWT_SECRET:-your_jwt_secret_key}
+      - JWT_EXPIRE=${JWT_EXPIRE:-30d}
+      - GROQ_API_KEY=${GROQ_API_KEY:-your_groq_api_key}
+      - GITHUB_API_TOKEN=${GITHUB_API_TOKEN:-your_github_token}
+      - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN:-your_slack_bot_token}
+      - SLACK_SIGNING_SECRET=${SLACK_SIGNING_SECRET:-your_slack_signing_secret}
+      - JIRA_HOST=${JIRA_HOST:-your-jira-instance.atlassian.net}
+      - JIRA_USERNAME=${JIRA_USERNAME:-your_jira_email}
+      - JIRA_API_TOKEN=${JIRA_API_TOKEN:-your_jira_api_token}
+      - SHOPIFY_SHOP_NAME=${SHOPIFY_SHOP_NAME:-your-shop.myshopify.com}
+      - SHOPIFY_API_KEY=${SHOPIFY_API_KEY:-your_shopify_api_key}
+      - SHOPIFY_PASSWORD=${SHOPIFY_PASSWORD:-your_shopify_password}
+      - SPEECH_API_KEY=${SPEECH_API_KEY:-your_speech_to_text_api_key}
+      - CORS_ORIGIN=http://localhost:80
+    volumes:
+      - ./agentdock-backend/logs:/usr/src/app/logs
+    ports:
+      - "3001:3001"
+    networks:
+      - agentdock-network
+
+  # Frontend
+  frontend:
+    build:
+      context: ./agentdock-frontend
+      dockerfile: Dockerfile
+    container_name: agentdock-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    networks:
+      - agentdock-network
+
+networks:
+  agentdock-network:
+    driver: bridge
+
+volumes:
+  mongo-data:
