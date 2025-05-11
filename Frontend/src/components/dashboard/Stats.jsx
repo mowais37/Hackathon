@@ -1,17 +1,18 @@
 // src/components/dashboard/Stats.jsx
-import React from 'react';
-import PropTypes from 'prop-types';
+import React from "react";
+import PropTypes from "prop-types";
+import "../../assets/styles/Stats.css"; // Assuming you have a CSS file for styling
 
 const Stats = ({ stats }) => {
   // Ensure stats is an object
   const safeStats = stats || {};
-  
+
   // Safe access to stats with defaults
   const totalAgents = safeStats.totalAgents || 0;
   const activeAgents = safeStats.activeAgents || 0;
   const totalTools = safeStats.totalTools || 0;
   const successRate = safeStats.successRate || 0;
-  
+
   return (
     <div className="stats-container">
       <div className="stat-card">
@@ -23,7 +24,7 @@ const Stats = ({ stats }) => {
           <p>Total Agents</p>
         </div>
       </div>
-      
+
       <div className="stat-card">
         <div className="stat-icon">
           <i className="fas fa-check-circle"></i>
@@ -33,7 +34,7 @@ const Stats = ({ stats }) => {
           <p>Active Agents</p>
         </div>
       </div>
-      
+
       <div className="stat-card">
         <div className="stat-icon">
           <i className="fas fa-tools"></i>
@@ -43,7 +44,7 @@ const Stats = ({ stats }) => {
           <p>Registered Tools</p>
         </div>
       </div>
-      
+
       <div className="stat-card">
         <div className="stat-icon">
           <i className="fas fa-percent"></i>
@@ -58,7 +59,7 @@ const Stats = ({ stats }) => {
 };
 
 Stats.propTypes = {
-  stats: PropTypes.object
+  stats: PropTypes.object.isRequired,
 };
 
 // Default props
@@ -67,8 +68,8 @@ Stats.defaultProps = {
     totalAgents: 0,
     activeAgents: 0,
     totalTools: 0,
-    successRate: 0
-  }
+    successRate: 0,
+  },
 };
 
 export default Stats;
