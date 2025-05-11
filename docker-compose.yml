@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # MongoDB Database
   mongo:
@@ -23,7 +21,7 @@ services:
   # Backend API
   backend:
     build:
-      context: ./agentdock-backend
+      context: ./Backend
       dockerfile: Dockerfile
     container_name: agentdock-backend
     restart: unless-stopped
@@ -49,7 +47,7 @@ services:
       - SPEECH_API_KEY=${SPEECH_API_KEY:-your_speech_to_text_api_key}
       - CORS_ORIGIN=http://localhost:80
     volumes:
-      - ./agentdock-backend/logs:/usr/src/app/logs
+      - ./Backend/logs:/usr/src/app/logs
     ports:
       - "3001:3001"
     networks:
@@ -58,14 +56,14 @@ services:
   # Frontend
   frontend:
     build:
-      context: ./agentdock-frontend
+      context: ./Frontend
       dockerfile: Dockerfile
     container_name: agentdock-frontend
     restart: unless-stopped
     depends_on:
       - backend
     ports:
-      - "80:80"
+      - "3002:3002"
     networks:
       - agentdock-network
 
