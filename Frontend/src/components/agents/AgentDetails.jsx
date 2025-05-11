@@ -5,13 +5,14 @@ import AgentContext from '../../context/agent/agentContext';
 import LogContext from '../../context/log/logContext';
 import ToolContext from '../../context/tool/toolContext';
 import { formatDate } from '../../utils/formatDate';
+import Loading from '../common/Loading';
 
 const AgentDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   
   const agentContext = useContext(AgentContext);
-  const { getAgentById, current, loading, deleteAgent, clearCurrent } = agentContext;
+  const { getAgentById, current, loading, error, deleteAgent, clearCurrent } = agentContext;
   
   const logContext = useContext(LogContext);
   const { getAgentLogs, logs, loading: logsLoading } = logContext;
@@ -22,27 +23,45 @@ const AgentDetails = () => {
   const [toolsDetails, setToolsDetails] = useState([]);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [loadingError, setLoadingError] = useState(null);
+  const [loadTimeout, setLoadTimeout] = useState(false);
   
   useEffect(() => {
+    // Set a timeout to detect if loading takes too long
+    const timer = setTimeout(() => {
+      if (loading) {
+        setLoadTimeout(true);
+      }
+    }, 5000);
+
     // Load the agent data
-    getAgentById(id);
+    const loadData = async () => {
+      try {
+        await getAgentById(id);
+        
+        // Load recent logs for this agent
+        getAgentLogs(id, 1, 5);
+        
+        // Load tools for reference
+        getTools();
+      } catch (err) {
+        setLoadingError(err.message || 'Failed to load agent data');
+      }
+    };
     
-    // Load recent logs for this agent
-    getAgentLogs(id, 1, 5);
-    
-    // Load tools for reference
-    getTools();
+    loadData();
     
     // Cleanup on unmount
     return () => {
       clearCurrent();
+      clearTimeout(timer);
     };
     // eslint-disable-next-line
   }, [id]);
   
   // Match tool IDs to actual tool objects
   useEffect(() => {
-    if (current?.tools && tools.length > 0) {
+    if (current?.tools && tools?.length > 0) {
       const toolObjects = current.tools.map(toolId => {
         return tools.find(tool => tool._id === toolId) || { _id: toolId, name: 'Unknown Tool', type: 'unknown' };
       });
@@ -96,7 +115,30 @@ const AgentDetails = () => {
     }
   };
   
-  if (loading) {
+  // If still loading after 5 seconds, show retry button
+  if (loadTimeout && loading) {
+    return (
+      <div className="loading-error-container">
+        <h2>Taking longer than expected...</h2>
+        <p>The agent data is taking a long time to load. This might be due to network issues or the backend might not be running.</p>
+        <button 
+          className="btn btn-primary" 
+          onClick={() => {
+            setLoadTimeout(false);
+            getAgentById(id);
+          }}
+        >
+          Retry
+        </button>
+        <Link to="/agents" className="btn btn-secondary ml-2">
+          Back to Agents
+        </Link>
+      </div>
+    );
+  }
+  
+  // Handle loading state
+  if (loading && !loadTimeout) {
     return (
       <div className="loading-container">
         <div className="loader"></div>
@@ -105,14 +147,39 @@ const AgentDetails = () => {
     );
   }
   
+  // Handle error state
+  if (error || loadingError) {
+    return (
+      <div className="error-container">
+        <h2>Error Loading Agent</h2>
+        <p>{error || loadingError}</p>
+        <button 
+          className="btn btn-primary" 
+          onClick={() => {
+            setLoadingError(null);
+            getAgentById(id);
+          }}
+        >
+          Retry
+        </button>
+        <Link to="/agents" className="btn btn-secondary ml-2">
+          Back to Agents
+        </Link>
+      </div>
+    );
+  }
+  
+  // Handle not found state
   if (!current) {
     return (
       <div className="not-found-container">
-        <h2>Agent Not Found</h2>
-        <p>The agent you're looking for doesn't exist or has been removed.</p>
-        <Link to="/agents" className="btn btn-primary">
-          Back to Agents
-        </Link>
+        <div className="not-found-content">
+          <h2>Agent Not Found</h2>
+          <p>The agent you're looking for doesn't exist or has been removed.</p>
+          <Link to="/agents" className="btn btn-primary">
+            Back to Agents
+          </Link>
+        </div>
       </div>
     );
   }
@@ -133,7 +200,7 @@ const AgentDetails = () => {
             <i className={getTypeIcon(type)}></i> {name}
           </h2>
           <div className={`agent-status ${getStatusClass(status)}`}>
-            {status}
+            {status || 'Inactive'}
           </div>
         </div>
         
@@ -172,16 +239,16 @@ const AgentDetails = () => {
             <h3>Overview</h3>
           </div>
           <div className="card-body">
-            <p className="agent-description">{description}</p>
+            <p className="agent-description">{description || 'No description provided'}</p>
             <div className="meta-info">
               <div className="meta-item">
-                <strong>Type:</strong> {type}
+                <strong>Type:</strong> {type || 'Custom'}
               </div>
               <div className="meta-item">
-                <strong>Created:</strong> {formatDate(createdAt, true)}
+                <strong>Created:</strong> {formatDate(createdAt, true) || 'Unknown'}
               </div>
               <div className="meta-item">
-                <strong>Last Updated:</strong> {formatDate(updatedAt, true)}
+                <strong>Last Updated:</strong> {formatDate(updatedAt, true) || 'Unknown'}
               </div>
             </div>
           </div>
@@ -253,10 +320,10 @@ const AgentDetails = () => {
             {/* Tools section */}
             <div className="config-section">
               <h4>Available Tools</h4>
-              {toolsDetails.length > 0 ? (
+              {toolsDetails && toolsDetails.length > 0 ? (
                 <ul className="tools-list">
-                  {toolsDetails.map(tool => (
-                    <li key={tool._id} className="tool-item">
+                  {toolsDetails.map((tool, index) => (
+                    <li key={tool._id || index} className="tool-item">
                       <Link to={`/tools/${tool._id}`}>
                         <i className={getTypeIcon(tool.type)}></i> {tool.name}
                       </Link>
@@ -280,16 +347,16 @@ const AgentDetails = () => {
               <div className="loading-container">
                 <div className="loader"></div>
               </div>
-            ) : logs.length > 0 ? (
+            ) : logs && logs.length > 0 ? (
               <ul className="logs-list">
-                {logs.map(log => (
-                  <li key={log._id} className="log-item">
-                    <div className={`log-type type-${log.type?.toLowerCase()}`}>
-                      {log.type}
+                {logs.map((log, index) => (
+                  <li key={log._id || index} className="log-item">
+                    <div className={`log-type type-${(log.type || 'info').toLowerCase()}`}>
+                      {log.type || 'Info'}
                     </div>
                     <div className="log-content">
-                      <div className="log-message">{log.message}</div>
-                      <div className="log-time">{formatDate(log.timestamp, true)}</div>
+                      <div className="log-message">{log.message || 'No message'}</div>
+                      <div className="log-time">{formatDate(log.timestamp, true) || 'Unknown'}</div>
                     </div>
                   </li>
                 ))}

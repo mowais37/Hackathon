@@ -4,9 +4,11 @@ import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { formatDate } from '../../utils/formatDate';
 
-const RecentActivity = ({ logs }) => {
+const RecentActivity = ({ logs = [] }) => {
   // Get type icon based on log type
   const getTypeIcon = type => {
+    if (!type) return 'fa-info-circle';
+    
     switch (type.toLowerCase()) {
       case 'query':
         return 'fa-comment-dots';
@@ -34,31 +36,31 @@ const RecentActivity = ({ logs }) => {
           </div>
         ) : (
           <ul className="activity-list">
-            {logs.map(log => (
-              <li key={log._id} className="activity-item">
+            {logs.map((log, index) => (
+              <li key={log._id || index} className="activity-item">
                 <div className="activity-icon">
                   <i className={`fas ${getTypeIcon(log.type)}`}></i>
                 </div>
                 <div className="activity-content">
                   <div className="activity-header">
-                    <span className={`activity-type type-${log.type.toLowerCase()}`}>
-                      {log.type}
+                    <span className={`activity-type type-${(log.type || 'info').toLowerCase()}`}>
+                      {log.type || 'Info'}
                     </span>
                     <span className="activity-time">
-                      {formatDate(log.timestamp)}
+                      {formatDate(log.timestamp || new Date())}
                     </span>
                   </div>
-                  <p className="activity-message">{log.message}</p>
-                  {(log.agentName || log.toolName) && (
+                  <p className="activity-message">{log.message || 'No message'}</p>
+                  {(log.agentName || log.toolName || log.agentId || log.toolId) && (
                     <div className="activity-source">
-                      {log.agentName && (
+                      {(log.agentName || log.agentId) && (
                         <Link to={`/agents/${log.agentId}`} className="source-link">
-                          <i className="fas fa-robot"></i> {log.agentName}
+                          <i className="fas fa-robot"></i> {log.agentName || 'Unknown Agent'}
                         </Link>
                       )}
-                      {log.toolName && (
+                      {(log.toolName || log.toolId) && (
                         <Link to={`/tools/${log.toolId}`} className="source-link">
-                          <i className="fas fa-tools"></i> {log.toolName}
+                          <i className="fas fa-tools"></i> {log.toolName || 'Unknown Tool'}
                         </Link>
                       )}
                     </div>

@@ -43,16 +43,16 @@ const LogState = props => {
       dispatch({
         type: SET_PAGINATION,
         payload: {
-          page: res.data.page,
-          limit: res.data.limit,
-          total: res.data.total,
-          totalPages: res.data.totalPages
+          page: res.data.page || page,
+          limit: res.data.limit || limit,
+          total: res.data.total || 0,
+          totalPages: res.data.totalPages || 1
         }
       });
     } catch (err) {
       dispatch({
         type: LOG_ERROR,
-        payload: err.response.msg
+        payload: err.response?.data?.msg || err.message || 'Failed to fetch logs'
       });
     }
   };
@@ -72,16 +72,16 @@ const LogState = props => {
       dispatch({
         type: SET_PAGINATION,
         payload: {
-          page: res.data.page,
-          limit: res.data.limit,
-          total: res.data.total,
-          totalPages: res.data.totalPages
+          page: res.data.page || page,
+          limit: res.data.limit || limit,
+          total: res.data.total || 0,
+          totalPages: res.data.totalPages || 1
         }
       });
     } catch (err) {
       dispatch({
         type: LOG_ERROR,
-        payload: err.response.msg
+        payload: err.response?.data?.msg || err.message || `Failed to fetch logs for agent ${agentId}`
       });
     }
   };
@@ -101,16 +101,16 @@ const LogState = props => {
       dispatch({
         type: SET_PAGINATION,
         payload: {
-          page: res.data.page,
-          limit: res.data.limit,
-          total: res.data.total,
-          totalPages: res.data.totalPages
+          page: res.data.page || page,
+          limit: res.data.limit || limit,
+          total: res.data.total || 0,
+          totalPages: res.data.totalPages || 1
         }
       });
     } catch (err) {
       dispatch({
         type: LOG_ERROR,
-        payload: err.response.msg
+        payload: err.response?.data?.msg || err.message || `Failed to fetch logs for tool ${toolId}`
       });
     }
   };

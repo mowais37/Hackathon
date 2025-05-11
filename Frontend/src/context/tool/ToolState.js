@@ -21,7 +21,7 @@ import {
 const ToolState = props => {
   const initialState = {
     tools: [],
-    toolTypes: ['GitHub', 'Slack', 'Jira', 'Shopify', 'Custom'],
+    toolTypes: ['GitHub', 'Slack', 'Jira', 'Shopify', 'Speech', 'Custom'],
     current: null,
     filtered: null,
     error: null,
@@ -35,32 +35,35 @@ const ToolState = props => {
     try {
       dispatch({ type: SET_LOADING });
       
-      console.log('Fetching tools...');
       const res = await axios.get('/api/tools');
-      console.log('Tools API response:', res.data);
-      
-      // Extract tools data from response, ensuring it's an array
-      let toolsData = [];
-      
-      if (res.data && res.data.data) {
-        // If the API returns data in a nested data property
-        toolsData = Array.isArray(res.data.data) ? res.data.data : [];
-      } else if (res.data) {
-        // If the API returns data directly
-        toolsData = Array.isArray(res.data) ? res.data : [];
-      }
-      
-      console.log('Processed tools data:', toolsData);
 
       dispatch({
         type: GET_TOOLS,
-        payload: toolsData
+        payload: res.data.data || res.data
       });
     } catch (err) {
-      console.error('Error fetching tools:', err);
       dispatch({
         type: TOOL_ERROR,
-        payload: err.response?.data?.message || 'Error fetching tools'
+        payload: err.response?.data?.msg || err.message || 'Failed to fetch tools'
+      });
+    }
+  };
+
+  // Get Tool by ID
+  const getToolById = async (id) => {
+    try {
+      dispatch({ type: SET_LOADING });
+      
+      const res = await axios.get(`/api/tools/${id}`);
+
+      dispatch({
+        type: SET_CURRENT,
+        payload: res.data.data || res.data
+      });
+    } catch (err) {
+      dispatch({
+        type: TOOL_ERROR,
+        payload: err.response?.data?.msg || err.message || `Failed to fetch tool ${id}`
       });
     }
   };
@@ -70,62 +73,46 @@ const ToolState = props => {
     try {
       dispatch({ type: SET_LOADING });
       
-      // Try to fetch tool types from API if available
-      try {
-        const res = await axios.get('/api/tools/types');
-        
-        if (res.data && Array.isArray(res.data)) {
-          dispatch({
-            type: GET_TOOL_TYPES,
-            payload: res.data
-          });
-        } else {
-          // Fallback to default types if API doesn't return an array
-          dispatch({
-            type: GET_TOOL_TYPES,
-            payload: initialState.toolTypes
-          });
-        }
-      } catch (err) {
-        // If endpoint doesn't exist, use default types
-        console.log('Tool types API not available, using defaults');
-        dispatch({
-          type: GET_TOOL_TYPES,
-          payload: initialState.toolTypes
-        });
-      }
+      // In a real app, you would fetch these from the API
+      // const res = await axios.get('/api/tools/types');
+      
+      dispatch({
+        type: GET_TOOL_TYPES,
+        payload: state.toolTypes
+      });
     } catch (err) {
       dispatch({
         type: TOOL_ERROR,
-        payload: 'Error fetching tool types'
+        payload: err.response?.data?.msg || err.message || 'Failed to fetch tool types'
       });
     }
   };
 
   // Add Tool
   const addTool = async tool => {
+    const config = {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    };
+
     try {
       dispatch({ type: SET_LOADING });
       
-      const res = await axios.post('/api/tools', tool);
-      
-      // Extract created tool data from response
-      const createdTool = res.data?.data || res.data;
-      
-      console.log('Created tool:', createdTool);
+      const res = await axios.post('/api/tools', tool, config);
 
       dispatch({
         type: ADD_TOOL,
-        payload: createdTool
+        payload: res.data.data || res.data
       });
       
-      return createdTool;
+      return res.data.data || res.data;
     } catch (err) {
-      console.error('Error creating tool:', err);
       dispatch({
         type: TOOL_ERROR,
-        payload: err.response?.data?.message || 'Error creating tool'
+        payload: err.response?.data?.msg || err.message || 'Failed to add tool'
       });
+      throw err;
     }
   };
 
@@ -135,46 +122,119 @@ const ToolState = props => {
       dispatch({ type: SET_LOADING });
       
       await axios.delete(`/api/tools/${id}`);
-      
-      console.log('Deleted tool:', id);
 
       dispatch({
         type: DELETE_TOOL,
         payload: id
       });
     } catch (err) {
-      console.error(`Error deleting tool ${id}:`, err);
       dispatch({
         type: TOOL_ERROR,
-        payload: err.response?.data?.message || 'Error deleting tool'
+        payload: err.response?.data?.msg || err.message || `Failed to delete tool ${id}`
       });
     }
   };
 
   // Update Tool
   const updateTool = async tool => {
+    const config = {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    };
+
     try {
       dispatch({ type: SET_LOADING });
       
-      const res = await axios.put(`/api/tools/${tool._id}`, tool);
-      
-      // Extract updated tool data from response
-      const updatedTool = res.data?.data || res.data;
-      
-      console.log('Updated tool:', updatedTool);
+      const res = await axios.put(
+        `/api/tools/${tool._id}`,
+        tool,
+        config
+      );
 
       dispatch({
         type: UPDATE_TOOL,
-        payload: updatedTool
+        payload: res.data.data || res.data
       });
       
-      return updatedTool;
+      return res.data.data || res.data;
     } catch (err) {
-      console.error(`Error updating tool ${tool._id}:`, err);
       dispatch({
         type: TOOL_ERROR,
-        payload: err.response?.data?.message || 'Error updating tool'
+        payload: err.response?.data?.msg || err.message || `Failed to update tool ${tool._id}`
       });
+      throw err;
+    }
+  };
+
+  // Execute Tool
+  const executeTool = async (id, action, params = {}) => {
+    const config = {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    };
+
+    try {
+      dispatch({ type: SET_LOADING });
+      
+      const res = await axios.post(
+        `/api/tools/${id}/execute`,
+        { action, params },
+        config
+      );
+
+      return res.data.data || res.data;
+    } catch (err) {
+      dispatch({
+        type: TOOL_ERROR,
+        payload: err.response?.data?.msg || err.message || `Failed to execute tool ${id} action ${action}`
+      });
+      throw err;
+    }
+  };
+
+  // Register Tool
+  const registerTool = async (id) => {
+    try {
+      dispatch({ type: SET_LOADING });
+      
+      const res = await axios.post(`/api/tools/${id}/register`);
+      
+      dispatch({
+        type: UPDATE_TOOL,
+        payload: res.data.data || res.data
+      });
+      
+      return res.data.data || res.data;
+    } catch (err) {
+      dispatch({
+        type: TOOL_ERROR,
+        payload: err.response?.data?.msg || err.message || `Failed to register tool ${id}`
+      });
+      throw err;
+    }
+  };
+
+  // Deregister Tool
+  const deregisterTool = async (id) => {
+    try {
+      dispatch({ type: SET_LOADING });
+      
+      const res = await axios.post(`/api/tools/${id}/deregister`);
+      
+      dispatch({
+        type: UPDATE_TOOL,
+        payload: res.data.data || res.data
+      });
+      
+      return res.data.data || res.data;
+    } catch (err) {
+      dispatch({
+        type: TOOL_ERROR,
+        payload: err.response?.data?.msg || err.message || `Failed to deregister tool ${id}`
+      });
+      throw err;
     }
   };
 
@@ -213,12 +273,16 @@ const ToolState = props => {
         error: state.error,
         loading: state.loading,
         getTools,
+        getToolById,
         getToolTypes,
         addTool,
         deleteTool,
         setCurrent,
         clearCurrent,
         updateTool,
+        executeTool,
+        registerTool,
+        deregisterTool,
         filterTools,
         clearFilter,
         clearTools

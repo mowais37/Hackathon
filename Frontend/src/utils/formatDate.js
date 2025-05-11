@@ -6,6 +6,17 @@
  * @returns {string} - The formatted date string
  */
 export const formatDate = (dateString, includeTime = false) => {
+  // Check if dateString is valid
+  if (!dateString) return 'Unknown date';
+  
+  try {
+    const date = new Date(dateString);
+    
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      return 'Invalid date';
+    }
+    
     const options = {
       year: 'numeric',
       month: 'short',
@@ -17,16 +28,30 @@ export const formatDate = (dateString, includeTime = false) => {
       options.minute = '2-digit';
     }
   
-    return new Date(dateString).toLocaleDateString(undefined, options);
-  };
+    return date.toLocaleDateString(undefined, options);
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return 'Error formatting date';
+  }
+};
+
+/**
+ * Get relative time from a date string (e.g. "2 hours ago")
+ * @param {string} dateString - The date string
+ * @returns {string} - The relative time string
+ */
+export const getRelativeTime = (dateString) => {
+  // Check if dateString is valid
+  if (!dateString) return 'Unknown time';
   
-  /**
-   * Get relative time from a date string (e.g. "2 hours ago")
-   * @param {string} dateString - The date string
-   * @returns {string} - The relative time string
-   */
-  export const getRelativeTime = (dateString) => {
+  try {
     const date = new Date(dateString);
+    
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      return 'Invalid date';
+    }
+    
     const now = new Date();
     const diff = now - date;
   
@@ -50,5 +75,8 @@ export const formatDate = (dateString, includeTime = false) => {
     } else {
       return 'Just now';
     }
-  };
-  
+  } catch (error) {
+    console.error('Error calculating relative time:', error);
+    return 'Unknown time';
+  }
+};

@@ -39,29 +39,15 @@ const AgentState = props => {
       dispatch({ type: SET_LOADING });
       
       const res = await axios.get('/api/agents');
-      
-      // Extract agents data from response, ensuring it's an array
-      let agentsData = [];
-      
-      if (res.data && res.data.data) {
-        // If the API returns data in a nested data property
-        agentsData = Array.isArray(res.data.data) ? res.data.data : [];
-      } else if (res.data) {
-        // If the API returns data directly
-        agentsData = Array.isArray(res.data) ? res.data : [];
-      }
-      
-      console.log('Fetched agents data:', agentsData);
 
       dispatch({
         type: GET_AGENTS,
-        payload: agentsData
+        payload: res.data.data || res.data
       });
     } catch (err) {
-      console.error('Error fetching agents:', err);
       dispatch({
         type: AGENT_ERROR,
-        payload: err.response?.data?.message || 'Error fetching agents'
+        payload: err.response?.data?.msg || err.message || 'Failed to fetch agents'
       });
     }
   };
@@ -72,78 +58,44 @@ const AgentState = props => {
       dispatch({ type: SET_LOADING });
       
       const res = await axios.get(`/api/agents/${id}`);
-      
-      // Extract agent data from response
-      const agentData = res.data?.data || res.data;
-      
-      console.log('Fetched agent data:', agentData);
 
       dispatch({
         type: SET_CURRENT,
-        payload: agentData
+        payload: res.data.data || res.data
       });
-      
-      return agentData;
     } catch (err) {
-      console.error(`Error fetching agent ${id}:`, err);
       dispatch({
         type: AGENT_ERROR,
-        payload: err.response?.data?.message || `Error fetching agent ${id}`
+        payload: err.response?.data?.msg || err.message || `Failed to fetch agent ${id}`
       });
     }
   };
 
   // Add Agent
   const addAgent = async agent => {
+    const config = {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    };
+
     try {
       dispatch({ type: SET_LOADING });
       
-      const res = await axios.post('/api/agents', agent);
-      
-      // Extract created agent data from response
-      const createdAgent = res.data?.data || res.data;
-      
-      console.log('Created agent:', createdAgent);
+      const res = await axios.post('/api/agents', agent, config);
 
       dispatch({
         type: ADD_AGENT,
-        payload: createdAgent
+        payload: res.data.data || res.data
       });
       
-      return createdAgent;
+      return res.data.data || res.data;
     } catch (err) {
-      console.error('Error creating agent:', err);
       dispatch({
         type: AGENT_ERROR,
-        payload: err.response?.data?.message || 'Error creating agent'
+        payload: err.response?.data?.msg || err.message || 'Failed to add agent'
       });
-    }
-  };
-
-  // Update Agent
-  const updateAgent = async agent => {
-    try {
-      dispatch({ type: SET_LOADING });
-      
-      const res = await axios.put(`/api/agents/${agent._id}`, agent);
-      
-      // Extract updated agent data from response
-      const updatedAgent = res.data?.data || res.data;
-      
-      console.log('Updated agent:', updatedAgent);
-
-      dispatch({
-        type: UPDATE_AGENT,
-        payload: updatedAgent
-      });
-      
-      return updatedAgent;
-    } catch (err) {
-      console.error(`Error updating agent ${agent._id}:`, err);
-      dispatch({
-        type: AGENT_ERROR,
-        payload: err.response?.data?.message || 'Error updating agent'
-      });
+      throw err;
     }
   };
 
@@ -153,45 +105,122 @@ const AgentState = props => {
       dispatch({ type: SET_LOADING });
       
       await axios.delete(`/api/agents/${id}`);
-      
-      console.log('Deleted agent:', id);
 
       dispatch({
         type: DELETE_AGENT,
         payload: id
       });
     } catch (err) {
-      console.error(`Error deleting agent ${id}:`, err);
       dispatch({
         type: AGENT_ERROR,
-        payload: err.response?.data?.message || 'Error deleting agent'
+        payload: err.response?.data?.msg || err.message || `Failed to delete agent ${id}`
       });
     }
   };
 
-  // Query Agent
-  const queryAgent = async (id, prompt) => {
+  // Update Agent
+  const updateAgent = async agent => {
+    const config = {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    };
+
     try {
       dispatch({ type: SET_LOADING });
       
-      const res = await axios.post(`/api/agents/${id}/query`, { query: prompt });
+      const res = await axios.put(
+        `/api/agents/${agent._id}`,
+        agent,
+        config
+      );
+
+      dispatch({
+        type: UPDATE_AGENT,
+        payload: res.data.data || res.data
+      });
       
-      // Extract query result from response
-      const queryResult = res.data?.data || res.data;
+      return res.data.data || res.data;
+    } catch (err) {
+      dispatch({
+        type: AGENT_ERROR,
+        payload: err.response?.data?.msg || err.message || `Failed to update agent ${agent._id}`
+      });
+      throw err;
+    }
+  };
+
+  // Query Agent
+  const queryAgent = async (id, query) => {
+    const config = {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    };
+
+    try {
+      dispatch({ type: SET_LOADING });
       
-      console.log('Agent query result:', queryResult);
+      const res = await axios.post(
+        `/api/agents/${id}/query`,
+        { query },
+        config
+      );
 
       dispatch({
         type: QUERY_AGENT,
-        payload: queryResult
+        payload: res.data.data || res.data
       });
       
-      return queryResult;
+      return res.data.data || res.data;
     } catch (err) {
-      console.error(`Error querying agent ${id}:`, err);
       dispatch({
         type: QUERY_ERROR,
-        payload: err.response?.data?.message || 'Error querying agent'
+        payload: err.response?.data?.msg || err.message || `Failed to query agent ${id}`
+      });
+      throw err;
+    }
+  };
+
+  // Register Agent
+  const registerAgent = async (id) => {
+    try {
+      dispatch({ type: SET_LOADING });
+      
+      const res = await axios.post(`/api/agents/${id}/register`);
+      
+      dispatch({
+        type: UPDATE_AGENT,
+        payload: res.data.data || res.data
+      });
+      
+      return res.data.data || res.data;
+    } catch (err) {
+      dispatch({
+        type: AGENT_ERROR,
+        payload: err.response?.data?.msg || err.message || `Failed to register agent ${id}`
+      });
+      throw err;
+    }
+  };
+
+  // Deregister Agent
+  const deregisterAgent = async (id) => {
+    try {
+      dispatch({ type: SET_LOADING });
+      
+      const res = await axios.post(`/api/agents/${id}/deregister`);
+      
+      dispatch({
+        type: UPDATE_AGENT,
+        payload: res.data.data || res.data
+      });
+      
+      return res.data.data || res.data;
+    } catch (err) {
+      dispatch({
+        type: AGENT_ERROR,
+        payload: err.response?.data?.msg || err.message || `Failed to deregister agent ${id}`
       });
       throw err;
     }
@@ -243,7 +272,9 @@ const AgentState = props => {
         filterAgents,
         clearFilter,
         clearAgents,
-        queryAgent
+        queryAgent,
+        registerAgent,
+        deregisterAgent
       }}
     >
       {props.children}

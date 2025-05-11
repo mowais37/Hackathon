@@ -34,15 +34,13 @@ const AuthState = props => {
     }
 
     try {
-      // Changed from /api/auth to /api/auth/me to match your backend routes
       const res = await axios.get('/api/auth/me');
 
       dispatch({
         type: USER_LOADED,
-        payload: res.data.data // Adjust based on your API response structure
+        payload: res.data.data || res.data
       });
     } catch (err) {
-      console.error('Auth error:', err);
       dispatch({ type: AUTH_ERROR });
     }
   };
@@ -62,15 +60,14 @@ const AuthState = props => {
 
       dispatch({
         type: REGISTER_SUCCESS,
-        payload: res.data // This should contain the token from your API
+        payload: res.data
       });
 
       loadUser();
     } catch (err) {
-      console.error('Register error:', err.response?.data || err.message);
       dispatch({
         type: REGISTER_FAIL,
-        payload: err.response?.data?.message || 'Registration failed'
+        payload: err.response?.data?.msg || err.message || 'Registration failed'
       });
     }
   };
@@ -90,24 +87,82 @@ const AuthState = props => {
 
       dispatch({
         type: LOGIN_SUCCESS,
-        payload: res.data // This should contain the token from your API
+        payload: res.data
       });
 
       loadUser();
     } catch (err) {
-      console.error('Login error:', err.response?.data || err.message);
       dispatch({
         type: LOGIN_FAIL,
-        payload: err.response?.data?.message || 'Login failed'
+        payload: err.response?.data?.msg || err.message || 'Login failed'
       });
     }
   };
 
+  // Update User Details
+  const updateUser = async formData => {
+    const config = {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    };
+
+    try {
+      dispatch({ type: SET_LOADING });
+      
+      const res = await axios.put('/api/auth/updatedetails', formData, config);
+
+      dispatch({
+        type: USER_LOADED,
+        payload: res.data.data || res.data
+      });
+
+      return res.data.data || res.data;
+    } catch (err) {
+      dispatch({
+        type: AUTH_ERROR,
+        payload: err.response?.data?.msg || err.message || 'Failed to update user details'
+      });
+      throw err;
+    }
+  };
+
+  // Update Password
+  const updatePassword = async formData => {
+    const config = {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    };
+
+    try {
+      dispatch({ type: SET_LOADING });
+      
+      const res = await axios.put('/api/auth/updatepassword', formData, config);
+
+      if (res.data.token) {
+        localStorage.setItem('token', res.data.token);
+      }
+
+      return res.data;
+    } catch (err) {
+      dispatch({
+        type: AUTH_ERROR,
+        payload: err.response?.data?.msg || err.message || 'Failed to update password'
+      });
+      throw err;
+    }
+  };
+
   // Logout
-  const logout = () => dispatch({ type: LOGOUT });
+  const logout = () => {
+    dispatch({ type: LOGOUT });
+  };
 
   // Clear Errors
-  const clearErrors = () => dispatch({ type: CLEAR_ERRORS });
+  const clearErrors = () => {
+    dispatch({ type: CLEAR_ERRORS });
+  };
 
   return (
     <AuthContext.Provider
@@ -121,7 +176,9 @@ const AuthState = props => {
         loadUser,
         login,
         logout,
-        clearErrors
+        clearErrors,
+        updateUser,
+        updatePassword
       }}
     >
       {props.children}

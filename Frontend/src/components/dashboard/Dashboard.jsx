@@ -25,24 +25,21 @@ const Dashboard = () => {
     // eslint-disable-next-line
   }, []);
   
-  // Ensure agents, tools, and logs are arrays before calculating stats
-  const agentsArray = Array.isArray(agents) ? agents : [];
-  const toolsArray = Array.isArray(tools) ? tools : [];
-  const logsArray = Array.isArray(logs) ? logs : [];
-  
-  // Calculate stats
+  // Calculate stats with null checks
   const stats = {
-    totalAgents: agentsArray.length,
-    activeAgents: agentsArray.filter(agent => agent.status === 'active').length,
-    totalTools: toolsArray.length,
-    totalLogs: logsArray.length,
-    querySuccess: logsArray
-      .filter(log => log.type === 'query' && log.status === 'success').length,
-    queryTotal: logsArray
-      .filter(log => log.type === 'query').length
+    totalAgents: agents ? agents.length : 0,
+    activeAgents: agents ? agents.filter(agent => agent?.status === 'active').length : 0,
+    totalTools: tools ? tools.length : 0,
+    totalLogs: logs ? logs.length : 0,
+    querySuccess: logs 
+      ? logs.filter(log => log?.type === 'query' && log?.status === 'success').length
+      : 0,
+    queryTotal: logs 
+      ? logs.filter(log => log?.type === 'query').length
+      : 0
   };
   
-  // Calculate success rate
+  // Calculate success rate (prevent division by zero)
   stats.successRate = stats.queryTotal > 0 
     ? Math.round((stats.querySuccess / stats.queryTotal) * 100) 
     : 0;
@@ -85,7 +82,7 @@ const Dashboard = () => {
               <Link to="/agents">View All</Link>
             </div>
             <div className="card-body">
-              {!agentsArray.length ? (
+              {!agents || agents.length === 0 ? (
                 <div className="empty-state compact">
                   <p>No agents created yet</p>
                   <Link to="/agents/new" className="btn btn-sm btn-primary">
@@ -94,15 +91,19 @@ const Dashboard = () => {
                 </div>
               ) : (
                 <ul className="entity-list">
-                  {agentsArray.slice(0, 3).map(agent => (
+                  {agents.slice(0, 3).map(agent => (
                     <li key={agent._id} className="entity-item">
                       <Link to={`/agents/${agent._id}`}>
                         <div className="entity-icon">
                           <i className={`fas fa-robot ${agent.type?.toLowerCase() || 'default'}`}></i>
                         </div>
                         <div className="entity-info">
-                          <h4>{agent.name || 'Unnamed Agent'}</h4>
-                          <p>{(agent.description || 'No description').substring(0, 60)}...</p>
+                          <h4>{agent.name}</h4>
+                          <p>{agent.description ? 
+                              (agent.description.length > 60 ? 
+                                agent.description.substring(0, 60) + '...' : 
+                                agent.description) : 
+                              'No description'}</p>
                         </div>
                         <div className="entity-meta">
                           <span className={`status-badge status-${agent.status?.toLowerCase() || 'unknown'}`}>
@@ -123,7 +124,7 @@ const Dashboard = () => {
               <Link to="/tools">View All</Link>
             </div>
             <div className="card-body">
-              {!toolsArray.length ? (
+              {!tools || tools.length === 0 ? (
                 <div className="empty-state compact">
                   <p>No tools registered yet</p>
                   <Link to="/tools/new" className="btn btn-sm btn-primary">
@@ -132,18 +133,22 @@ const Dashboard = () => {
                 </div>
               ) : (
                 <ul className="entity-list">
-                  {toolsArray.slice(0, 3).map(tool => (
+                  {tools.slice(0, 3).map(tool => (
                     <li key={tool._id} className="entity-item">
                       <Link to={`/tools/${tool._id}`}>
                         <div className="entity-icon">
                           <i className={`fas fa-tools ${tool.type?.toLowerCase() || 'default'}`}></i>
                         </div>
                         <div className="entity-info">
-                          <h4>{tool.name || 'Unnamed Tool'}</h4>
-                          <p>{(tool.description || 'No description').substring(0, 60)}...</p>
+                          <h4>{tool.name}</h4>
+                          <p>{tool.description ? 
+                              (tool.description.length > 60 ? 
+                                tool.description.substring(0, 60) + '...' : 
+                                tool.description) : 
+                              'No description'}</p>
                         </div>
                         <div className="entity-meta">
-                          <span className={`method-badge method-${(tool.method || 'get').toLowerCase()}`}>
+                          <span className={`method-badge method-${tool.method?.toLowerCase() || 'get'}`}>
                             {tool.method || 'GET'}
                           </span>
                         </div>
@@ -157,7 +162,7 @@ const Dashboard = () => {
         </div>
         
         <div className="grid-column">
-          <RecentActivity logs={logsArray} />
+          <RecentActivity logs={logs || []} />
         </div>
       </div>
     </div>
