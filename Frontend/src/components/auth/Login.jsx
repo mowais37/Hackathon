@@ -3,17 +3,25 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthContext from '../../context/auth/authContext';
 import { validateEmail } from '../../utils/validateForm';
+import setAuthToken from '../../utils/setAuthToken';
 
 const Login = () => {
   const authContext = useContext(AuthContext);
-  const { login, error, clearErrors, isAuthenticated } = authContext;
+  const { login, error, clearErrors, isAuthenticated, token } = authContext;
   const navigate = useNavigate();
 
   useEffect(() => {
     if (isAuthenticated) {
       navigate('/dashboard');
     }
-  }, [isAuthenticated, navigate]);
+    
+    // Debug token after authentication change
+    if (token) {
+      console.log('Authentication successful, token set:', token.substring(0, 10) + '...');
+      // Ensure token is set in headers
+      setAuthToken(token);
+    }
+  }, [isAuthenticated, navigate, token]);
 
   const [user, setUser] = useState({
     email: '',
@@ -59,6 +67,7 @@ const Login = () => {
     e.preventDefault();
     
     if (validateForm()) {
+      console.log('Submitting login with:', { email });
       login({
         email,
         password
@@ -72,6 +81,7 @@ const Login = () => {
         <h1>
           Account <span className="text-primary">Login</span>
         </h1>
+        {error && <div className="alert alert-danger">{error}</div>}
         <form onSubmit={onSubmit}>
           <div className="form-group">
             <label htmlFor="email">Email Address</label>

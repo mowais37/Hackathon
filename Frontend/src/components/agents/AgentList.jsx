@@ -22,6 +22,13 @@ const AgentList = () => {
     return <Loading />;
   }
 
+  // Ensure agents is an array
+  const agentsArray = Array.isArray(agents) ? agents : [];
+  const filteredArray = Array.isArray(filtered) ? filtered : [];
+  
+  // Determine which array to use for rendering
+  const displayAgents = filteredArray.length > 0 ? filteredArray : agentsArray;
+
   return (
     <div className="agent-list-container">
       <div className="agent-list-header">
@@ -49,7 +56,7 @@ const AgentList = () => {
         <button className="filter-btn">Custom</button>
       </div>
 
-      {agents && agents.length === 0 ? (
+      {displayAgents.length === 0 ? (
         <div className="empty-state">
           <i className="fas fa-robot fa-4x"></i>
           <h3>No agents found</h3>
@@ -60,7 +67,7 @@ const AgentList = () => {
         </div>
       ) : (
         <div className="agent-grid">
-          {(filtered || agents).map(agent => (
+          {displayAgents.map(agent => (
             <AgentCard key={agent._id} agent={agent} />
           ))}
         </div>

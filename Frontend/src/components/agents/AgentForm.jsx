@@ -30,6 +30,7 @@ const AgentForm = () => {
   
   // Load tools on component mount
   useEffect(() => {
+    console.log("Loading tools...");
     getTools();
     
     // If editing an existing agent, fetch data if not already in state
@@ -62,6 +63,16 @@ const AgentForm = () => {
   }, [current]);
   
   const { name, description, type, code, status, config, tools: selectedTools } = formData;
+  
+  // Ensure tools is an array before rendering
+  const toolsArray = Array.isArray(tools) ? tools : [];
+  
+  // Debug tools data
+  useEffect(() => {
+    console.log('Tools state:', tools);
+    console.log('Is tools an array?', Array.isArray(tools));
+    console.log('toolsArray:', toolsArray);
+  }, [tools, toolsArray]);
   
   const onChange = e => {
     const { name, value } = e.target;
@@ -233,11 +244,17 @@ const AgentForm = () => {
                   value={selectedTools}
                   onChange={onToolsChange}
                 >
-                  {tools && tools.map(tool => (
-                    <option key={tool._id} value={tool._id}>
-                      {tool.name} ({tool.type})
+                  {toolsArray.length > 0 ? (
+                    toolsArray.map(tool => (
+                      <option key={tool._id} value={tool._id}>
+                        {tool.name} ({tool.type})
+                      </option>
+                    ))
+                  ) : (
+                    <option disabled value="">
+                      No tools available
                     </option>
-                  ))}
+                  )}
                 </select>
                 <small className="form-text text-muted">
                   Hold Ctrl/Cmd to select multiple tools

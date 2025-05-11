@@ -20,27 +20,33 @@ const agentReducer = (state, action) => {
     case GET_AGENTS:
       return {
         ...state,
-        agents: action.payload,
+        agents: Array.isArray(action.payload) ? action.payload : [],
         loading: false
       };
     case ADD_AGENT:
       return {
         ...state,
-        agents: [action.payload, ...state.agents],
+        agents: Array.isArray(state.agents) 
+          ? [action.payload, ...state.agents] 
+          : [action.payload],
         loading: false
       };
     case UPDATE_AGENT:
       return {
         ...state,
-        agents: state.agents.map(agent =>
-          agent._id === action.payload._id ? action.payload : agent
-        ),
+        agents: Array.isArray(state.agents)
+          ? state.agents.map(agent =>
+              agent._id === action.payload._id ? action.payload : agent
+            )
+          : [],
         loading: false
       };
     case DELETE_AGENT:
       return {
         ...state,
-        agents: state.agents.filter(agent => agent._id !== action.payload),
+        agents: Array.isArray(state.agents)
+          ? state.agents.filter(agent => agent._id !== action.payload)
+          : [],
         loading: false
       };
     case CLEAR_AGENTS:
@@ -64,10 +70,16 @@ const agentReducer = (state, action) => {
     case FILTER_AGENTS:
       return {
         ...state,
-        filtered: state.agents.filter(agent => {
-          const regex = new RegExp(`${action.payload}`, 'gi');
-          return agent.name.match(regex) || agent.type.match(regex);
-        })
+        filtered: Array.isArray(state.agents)
+          ? state.agents.filter(agent => {
+              if (!agent) return false;
+              const regex = new RegExp(`${action.payload}`, 'gi');
+              return (
+                (agent.name && agent.name.match(regex)) || 
+                (agent.type && agent.type.match(regex))
+              );
+            })
+          : []
       };
     case CLEAR_FILTER:
       return {

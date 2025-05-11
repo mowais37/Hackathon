@@ -34,13 +34,15 @@ const AuthState = props => {
     }
 
     try {
-      const res = await axios.get('/api/auth');
+      // Changed from /api/auth to /api/auth/me to match your backend routes
+      const res = await axios.get('/api/auth/me');
 
       dispatch({
         type: USER_LOADED,
-        payload: res.data
+        payload: res.data.data // Adjust based on your API response structure
       });
     } catch (err) {
+      console.error('Auth error:', err);
       dispatch({ type: AUTH_ERROR });
     }
   };
@@ -60,14 +62,15 @@ const AuthState = props => {
 
       dispatch({
         type: REGISTER_SUCCESS,
-        payload: res.data
+        payload: res.data // This should contain the token from your API
       });
 
       loadUser();
     } catch (err) {
+      console.error('Register error:', err.response?.data || err.message);
       dispatch({
         type: REGISTER_FAIL,
-        payload: err.response.data.msg
+        payload: err.response?.data?.message || 'Registration failed'
       });
     }
   };
@@ -87,14 +90,15 @@ const AuthState = props => {
 
       dispatch({
         type: LOGIN_SUCCESS,
-        payload: res.data
+        payload: res.data // This should contain the token from your API
       });
 
       loadUser();
     } catch (err) {
+      console.error('Login error:', err.response?.data || err.message);
       dispatch({
         type: LOGIN_FAIL,
-        payload: err.response.data.msg
+        payload: err.response?.data?.message || 'Login failed'
       });
     }
   };

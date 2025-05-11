@@ -39,40 +39,110 @@ const AgentState = props => {
       dispatch({ type: SET_LOADING });
       
       const res = await axios.get('/api/agents');
+      
+      // Extract agents data from response, ensuring it's an array
+      let agentsData = [];
+      
+      if (res.data && res.data.data) {
+        // If the API returns data in a nested data property
+        agentsData = Array.isArray(res.data.data) ? res.data.data : [];
+      } else if (res.data) {
+        // If the API returns data directly
+        agentsData = Array.isArray(res.data) ? res.data : [];
+      }
+      
+      console.log('Fetched agents data:', agentsData);
 
       dispatch({
         type: GET_AGENTS,
-        payload: res.data
+        payload: agentsData
       });
     } catch (err) {
+      console.error('Error fetching agents:', err);
       dispatch({
         type: AGENT_ERROR,
-        payload: err.response.msg
+        payload: err.response?.data?.message || 'Error fetching agents'
+      });
+    }
+  };
+
+  // Get Agent by ID
+  const getAgentById = async (id) => {
+    try {
+      dispatch({ type: SET_LOADING });
+      
+      const res = await axios.get(`/api/agents/${id}`);
+      
+      // Extract agent data from response
+      const agentData = res.data?.data || res.data;
+      
+      console.log('Fetched agent data:', agentData);
+
+      dispatch({
+        type: SET_CURRENT,
+        payload: agentData
+      });
+      
+      return agentData;
+    } catch (err) {
+      console.error(`Error fetching agent ${id}:`, err);
+      dispatch({
+        type: AGENT_ERROR,
+        payload: err.response?.data?.message || `Error fetching agent ${id}`
       });
     }
   };
 
   // Add Agent
   const addAgent = async agent => {
-    const config = {
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    };
-
     try {
       dispatch({ type: SET_LOADING });
       
-      const res = await axios.post('/api/agents', agent, config);
+      const res = await axios.post('/api/agents', agent);
+      
+      // Extract created agent data from response
+      const createdAgent = res.data?.data || res.data;
+      
+      console.log('Created agent:', createdAgent);
 
       dispatch({
         type: ADD_AGENT,
-        payload: res.data
+        payload: createdAgent
       });
+      
+      return createdAgent;
     } catch (err) {
+      console.error('Error creating agent:', err);
       dispatch({
         type: AGENT_ERROR,
-        payload: err.response.msg
+        payload: err.response?.data?.message || 'Error creating agent'
+      });
+    }
+  };
+
+  // Update Agent
+  const updateAgent = async agent => {
+    try {
+      dispatch({ type: SET_LOADING });
+      
+      const res = await axios.put(`/api/agents/${agent._id}`, agent);
+      
+      // Extract updated agent data from response
+      const updatedAgent = res.data?.data || res.data;
+      
+      console.log('Updated agent:', updatedAgent);
+
+      dispatch({
+        type: UPDATE_AGENT,
+        payload: updatedAgent
+      });
+      
+      return updatedAgent;
+    } catch (err) {
+      console.error(`Error updating agent ${agent._id}:`, err);
+      dispatch({
+        type: AGENT_ERROR,
+        payload: err.response?.data?.message || 'Error updating agent'
       });
     }
   };
@@ -83,75 +153,45 @@ const AgentState = props => {
       dispatch({ type: SET_LOADING });
       
       await axios.delete(`/api/agents/${id}`);
+      
+      console.log('Deleted agent:', id);
 
       dispatch({
         type: DELETE_AGENT,
         payload: id
       });
     } catch (err) {
+      console.error(`Error deleting agent ${id}:`, err);
       dispatch({
         type: AGENT_ERROR,
-        payload: err.response.msg
-      });
-    }
-  };
-
-  // Update Agent
-  const updateAgent = async agent => {
-    const config = {
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    };
-
-    try {
-      dispatch({ type: SET_LOADING });
-      
-      const res = await axios.put(
-        `/api/agents/${agent._id}`,
-        agent,
-        config
-      );
-
-      dispatch({
-        type: UPDATE_AGENT,
-        payload: res.data
-      });
-    } catch (err) {
-      dispatch({
-        type: AGENT_ERROR,
-        payload: err.response.msg
+        payload: err.response?.data?.message || 'Error deleting agent'
       });
     }
   };
 
   // Query Agent
   const queryAgent = async (id, prompt) => {
-    const config = {
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    };
-
     try {
       dispatch({ type: SET_LOADING });
       
-      const res = await axios.post(
-        `/api/agents/${id}/query`,
-        { prompt },
-        config
-      );
+      const res = await axios.post(`/api/agents/${id}/query`, { query: prompt });
+      
+      // Extract query result from response
+      const queryResult = res.data?.data || res.data;
+      
+      console.log('Agent query result:', queryResult);
 
       dispatch({
         type: QUERY_AGENT,
-        payload: res.data
+        payload: queryResult
       });
       
-      return res.data;
+      return queryResult;
     } catch (err) {
+      console.error(`Error querying agent ${id}:`, err);
       dispatch({
         type: QUERY_ERROR,
-        payload: err.response.msg
+        payload: err.response?.data?.message || 'Error querying agent'
       });
       throw err;
     }
@@ -194,6 +234,7 @@ const AgentState = props => {
         queryLoading: state.queryLoading,
         queryError: state.queryError,
         getAgents,
+        getAgentById,
         addAgent,
         deleteAgent,
         setCurrent,
