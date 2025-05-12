@@ -50,14 +50,14 @@ const AgentConsole = ({ id }) => {
     try {
       // Call the API to query the agent
       const response = await queryAgent(id, prompt);
-      
+      console.log('response', response)
       // Add a short delay to make the response feel more natural
       setTimeout(() => {
         // Add agent response to conversation
         const agentMessage = {
           id: Date.now() + 1,
           role: 'agent',
-          content: response.output || response.message || 'No response from agent',
+          content: response?.response || 'No response from agent',
           timestamp: new Date().toISOString()
         };
         
@@ -94,14 +94,14 @@ const AgentConsole = ({ id }) => {
     }
   };
   
-  if (loading) {
-    return (
-      <div className="loading-container">
-        <div className="loader"></div>
-        <p>Loading agent...</p>
-      </div>
-    );
-  }
+  // if (loading) {
+  //   return (
+  //     <div className="loading-container">
+  //       <div className="loader"></div>
+  //       <p>Loading agent...</p>
+  //     </div>
+  //   );
+  // }
   
   if (!current) {
     return (
@@ -314,13 +314,13 @@ const AgentConsole = ({ id }) => {
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="Type your message..."
-            disabled={current.status !== 'active' || isTyping}
+            disabled={!current.isActive || isTyping}
             ref={inputRef}
           />
           <button 
             type="button" 
             className="voice-input-btn"
-            disabled={current.status !== 'active' || isTyping}
+            disabled={!current.isActive || isTyping}
           >
             <i className="fas fa-microphone"></i>
           </button>
@@ -328,13 +328,13 @@ const AgentConsole = ({ id }) => {
         <button 
           type="submit" 
           className="send-btn"
-          disabled={!prompt.trim() || current.status !== 'active' || isTyping}
+          disabled={!prompt.trim() || !current.isActive || isTyping}
         >
           <i className="fas fa-paper-plane"></i>
         </button>
       </form>
       
-      {current.status !== 'active' && (
+      {!current.isActive && (
         <div className="agent-inactive-warning">
           <i className="fas fa-exclamation-circle"></i>
           <span>This agent is currently {current.status || 'inactive'}. Activate it in the agent settings to enable chat.</span>

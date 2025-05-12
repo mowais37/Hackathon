@@ -149,15 +149,15 @@ const AgentForm = () => {
     navigate('/agents');
   };
   
-  if (loading && id && !current) {
-    return (
-      <div className="loading-container">
-        <div className="loader"></div>
-        <p>Loading agent data...</p>
-      </div>
-    );
-  }
-  
+  // if (loading && id && !current) {
+  //   return (
+  //     <div className="loading-container">
+  //       <div className="loader"></div>
+  //       <p>Loading agent data...</p>
+  //     </div>
+  //   );
+  // }
+
   return (
     <div className="form-container">
       <h2>{id ? 'Edit Agent' : 'Create New Agent'}</h2>
@@ -225,8 +225,8 @@ const AgentForm = () => {
                   value={status}
                   onChange={onChange}
                 >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
+                  <option value="true">Active</option>
+                  <option value="false">Inactive</option>
                 </select>
               </div>
             </div>

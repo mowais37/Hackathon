@@ -87,7 +87,7 @@ exports.login = async (req, res, next) => {
     // Generate JWT token
     const token = user.getSignedJwtToken();
     console.log("Generated token:", token);
-    localStorage.setItem("token", token);
+    // localStorage.setItem("token", token);
     sendSuccess(
       res,
       {

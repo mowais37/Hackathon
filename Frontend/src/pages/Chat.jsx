@@ -31,9 +31,9 @@ const Chat = () => {
     // eslint-disable-next-line
   }, [agentId]);
 
-  if (!isLoaded || loading) {
-    return <Loading />;
-  }
+//   if (!isLoaded || loading) {
+//     return <Loading />;
+//   }
 
   // Redirect to agents page if no agent ID is provided
   if (!agentId) {

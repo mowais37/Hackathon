@@ -138,14 +138,14 @@ const AgentDetails = () => {
   }
   
   // Handle loading state
-  if (loading && !loadTimeout) {
-    return (
-      <div className="loading-container">
-        <div className="loader"></div>
-        <p>Loading agent data...</p>
-      </div>
-    );
-  }
+  // if (loading && !loadTimeout) {
+  //   return (
+  //     <div className="loading-container">
+  //       <div className="loader"></div>
+  //       <p>Loading agent data...</p>
+  //     </div>
+  //   );
+  // }
   
   // Handle error state
   if (error || loadingError) {
