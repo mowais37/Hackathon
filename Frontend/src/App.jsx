@@ -13,6 +13,7 @@ import Logs from "./pages/Logs";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Profile from "./pages/Profile";
+import Chat from './pages/Chat';
 import NotFound from "./pages/NotFound";
 
 // Context
@@ -101,6 +102,7 @@ const AppContent = () => {
             path="/profile"
             element={<PrivateRoute element={<Profile />} />}
           />
+            <Route path="/chat" element={<PrivateRoute element={<Chat />} />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

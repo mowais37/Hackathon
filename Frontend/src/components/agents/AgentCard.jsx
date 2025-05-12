@@ -9,23 +9,12 @@ const AgentCard = ({ agent }) => {
   const agentContext = useContext(AgentContext);
   const { deleteAgent, setCurrent, clearCurrent } = agentContext;
 
-  // Make sure agent is defined and has necessary properties
-  if (!agent) {
-    return (
-      <div className="agent-card error-card">
-        <div className="card-error-message">
-          Invalid agent data
-        </div>
-      </div>
-    );
-  }
-
   const {
     _id,
-    name = 'Unnamed Agent',
-    description = 'No description available',
-    type = 'unknown',
-    status,
+    name,
+    description,
+    type,
+    status = 'inactive',
     createdAt
   } = agent;
 
@@ -42,9 +31,6 @@ const AgentCard = ({ agent }) => {
 
   // Function to get status class
   const getStatusClass = status => {
-    // Check if status is defined before calling toLowerCase()
-    if (!status) return 'status-unknown';
-    
     switch (status.toLowerCase()) {
       case 'active':
         return 'status-active';
@@ -53,15 +39,12 @@ const AgentCard = ({ agent }) => {
       case 'error':
         return 'status-error';
       default:
-        return 'status-unknown';
+        return '';
     }
   };
 
   // Function to get type icon
   const getTypeIcon = type => {
-    // Check if type is defined before calling toLowerCase()
-    if (!type) return 'fas fa-cogs';
-    
     switch (type.toLowerCase()) {
       case 'github':
         return 'fab fa-github';
@@ -84,18 +67,14 @@ const AgentCard = ({ agent }) => {
           <span>{type}</span>
         </div>
         <div className={`agent-status ${getStatusClass(status)}`}>
-          <span>{status || 'Unknown'}</span>
+          <span>{status}</span>
         </div>
       </div>
       <div className="agent-card-body">
         <h3>{name}</h3>
-        <p className="agent-description">
-          {description ? 
-            (description.length > 100 ? description.substring(0, 100) + '...' : description) 
-            : 'No description available'}
-        </p>
+        <p className="agent-description">{description.length > 100 ? description.substring(0, 100) + '...' : description}</p>
         <div className="agent-meta">
-          <span>Created: {createdAt ? formatDate(createdAt) : 'Unknown'}</span>
+          <span>Created: {formatDate(createdAt)}</span>
         </div>
       </div>
       <div className="agent-card-footer">
